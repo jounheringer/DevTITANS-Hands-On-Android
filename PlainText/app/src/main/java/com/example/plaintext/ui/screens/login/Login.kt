@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -48,6 +50,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -70,7 +73,105 @@ fun Login_screen(
     navigateToList: () -> Unit,
     viewModel: PreferencesViewModel = hiltViewModel()
 ) {
+    var salvarInfo by remember { mutableStateOf(false) }
 
+    Scaffold(
+        topBar = {
+            TopBarComponent(
+                navigateToSettings = navigateToSettings,
+                navigateToSensores = navigateToList
+            )
+        }
+    ) { innerPadding -> 
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(innerPadding),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            LoginHeader()
+
+            LoginInputs()
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = salvarInfo,
+                    onCheckedChange = { salvarInfo = !salvarInfo }
+                )
+
+                Text(text = "Salvar as informações de login")
+            }
+
+            Button(onClick = {}) {
+                Text(text = "Enviar")
+            }
+        }
+    }
+}
+
+@Composable
+fun LoginInputs() {
+    var login by remember { mutableStateOf("") }
+    var senha by remember { mutableStateOf("") }
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(end = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = "Digite suas credenciais para continuar.",
+            textAlign = TextAlign.Center
+        )
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(modifier = Modifier.weight(0.4f), text = "Login:", textAlign = TextAlign.Center)
+            OutlinedTextField(
+                modifier = Modifier.weight(1f),
+                value = login,
+                onValueChange = { login = it },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(autoCorrectEnabled = false)
+            )
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(modifier = Modifier.weight(0.4f), text = "Senha:", textAlign = TextAlign.Center)
+            OutlinedTextField(
+                modifier = Modifier.weight(1f),
+                value = senha,
+                onValueChange = { senha = it },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(autoCorrectEnabled = false),
+                visualTransformation = PasswordVisualTransformation()
+            )
+        }
+    }
+}
+
+@Composable
+fun LoginHeader() {
+    Box(modifier = Modifier.fillMaxWidth().background(Color.Green)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Image(
+                painter = painterResource(R.drawable.ic_launcher_foreground),
+                contentDescription = "Android Icon"
+            )
+            Spacer(modifier = Modifier.width(20.dp))
+            Column(modifier = Modifier.width(130.dp)) {
+                Text(text = "\"The most secure password manager\"")
+                Text(text = "Bob and Alice")
+            }
+        }
+    }
 }
 
 @Composable
@@ -97,8 +198,8 @@ fun MyAlertDialog(shouldShowDialog: MutableState<Boolean>) {
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun TopBarComponent(
-    navigateToSettings: (() -> Unit?)? = null,
-    navigateToSensores: (() -> Unit?)? = null,
+    navigateToSettings: (() -> Unit) = {},
+    navigateToSensores: (() -> Unit) = {},
 ) {
     var expanded by remember { mutableStateOf(false) }
     val shouldShowDialog = remember { mutableStateOf(false) }
@@ -110,34 +211,43 @@ fun TopBarComponent(
     TopAppBar(
         title = { Text("PlainText") },
         actions = {
-            if (navigateToSettings != null && navigateToSensores != null) {
-                IconButton(onClick = { expanded = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                }
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Configurações") },
-                        onClick = {
-                            navigateToSettings();
-                            expanded = false;
-                        },
-                        modifier = Modifier.padding(8.dp)
-                    )
-                    DropdownMenuItem(
-                        text = {
-                            Text("Sobre");
-                        },
-                        onClick = {
-                            shouldShowDialog.value = true;
-                            expanded = false;
-                        },
-                        modifier = Modifier.padding(8.dp)
-                    )
-                }
+            IconButton(onClick = { expanded = true }) {
+                Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Configurações") },
+                    onClick = {
+                        navigateToSettings();
+                        expanded = false;
+                    },
+                    modifier = Modifier.padding(8.dp)
+                )
+                DropdownMenuItem(
+                    text = {
+                        Text("Sobre");
+                    },
+                    onClick = {
+                        shouldShowDialog.value = true;
+                        expanded = false;
+                    },
+                    modifier = Modifier.padding(8.dp)
+                )
             }
         }
     )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewLogin() {
+    MaterialTheme {
+        Login_screen(
+            navigateToSettings = {  },
+            navigateToList = {  }
+        )
+    }
 }
