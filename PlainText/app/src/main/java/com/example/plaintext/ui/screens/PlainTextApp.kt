@@ -42,6 +42,13 @@ fun PlainTextApp(
                 navigateToList = {}
             )
         }
+
+        composable<Screen.Preferences> {
+            SettingsScreen(
+                navController = appState.navController
+            )
+        }
+
         composable<Screen.EditList>(
             typeMap = mapOf(typeOf<PasswordInfo>() to parcelableType<PasswordInfo>())
         ) {
