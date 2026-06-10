@@ -1,15 +1,15 @@
 package com.example.plaintext.data.di
 
-
 import android.content.Context
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.createSavedStateHandle
-import androidx.room.Room
-import com.example.plaintext.data.PlainTextDatabase
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStoreFile
 import com.example.plaintext.data.dao.PasswordDao
 import com.example.plaintext.data.repository.LocalPasswordDBStore
 import com.example.plaintext.data.repository.PasswordDBStore
-import com.example.plaintext.ui.screens.hello.ListViewModel
+import com.example.plaintext.data.repository.UserPreferencesRepository
+import com.example.plaintext.data.repository.UserPreferencesRepositoryImpl
 import com.example.plaintext.ui.screens.hello.dbSimulator
 import dagger.Module
 import dagger.Provides
@@ -28,6 +28,20 @@ object DataDiModule {
     ): PasswordDBStore = LocalPasswordDBStore(passwordDao)
 
     @Provides
-	@Singleton
-	fun provideDBSimulator(): dbSimulator = dbSimulator()
+    @Singleton
+    fun provideDBSimulator(): dbSimulator = dbSimulator()
+
+    @Provides
+    @Singleton
+    fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> {
+        return PreferenceDataStoreFactory.create(
+            produceFile = { context.preferencesDataStoreFile("user_preferences") }
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserPreferencesRepository(dataStore: DataStore<Preferences>): UserPreferencesRepository {
+        return UserPreferencesRepositoryImpl(dataStore)
+    }
 }

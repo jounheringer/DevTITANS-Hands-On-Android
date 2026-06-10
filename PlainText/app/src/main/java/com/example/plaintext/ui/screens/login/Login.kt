@@ -1,24 +1,17 @@
 package com.example.plaintext.ui.screens.login
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
@@ -40,52 +33,76 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.plaintext.R
-import com.example.plaintext.ui.viewmodel.PreferencesViewModel
+import com.example.plaintext.ui.viewmodel.LoginEffects
+import com.example.plaintext.ui.viewmodel.LoginState
+import com.example.plaintext.ui.viewmodel.LoginViewModel
+import com.example.plaintext.utils.rememberFlowWithLifecycle
 
-data class LoginState(
-    val preencher: Boolean,
-    val login: String,
-    val navigateToSettings: () -> Unit,
-    val navigateToList: (name: String) -> Unit,
-    val checkCredentials: (login: String, password: String) -> Boolean,
-)
+//data class LoginState(
+//    val preencher: Boolean,
+//    val login: String,
+//    val navigateToSettings: () -> Unit,
+//    val navigateToList: (name: String) -> Unit,
+//    val checkCredentials: (login: String, password: String) -> Boolean,
+//)
 
 @Composable
 fun Login_screen(
     navigateToSettings: () -> Unit,
     navigateToList: () -> Unit,
-    viewModel: PreferencesViewModel = hiltViewModel()
+    viewModel: LoginViewModel = hiltViewModel(),
 ) {
+    val context = LocalContext.current
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val effects = rememberFlowWithLifecycle(viewModel.effect)
+
+    LaunchedEffect(effects) {
+        effects.collect { effect ->
+            when (effect) {
+                is LoginEffects.Error -> {
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                }
+
+                LoginEffects.Success -> {
+                    Toast.makeText(context, "Login realizado.", Toast.LENGTH_SHORT).show()
+                    navigateToList()
+                }
+            }
+        }
+    }
+
     LoginScreenContent(
+        state = state,
+        onLoginChanged = viewModel::onLoginChange,
+        onPasswordChanged = viewModel::onPasswordChange,
+        onSaveInfoChanged = viewModel::onSaveInfoChange,
         navigateToSettings = navigateToSettings,
-        navigateToList = navigateToList
+        navigateToList = viewModel::onLoginClick
     )
 }
 
 @Composable
 fun LoginScreenContent(
+    state: LoginState,
+    onLoginChanged: (String) -> Unit,
+    onPasswordChanged: (String) -> Unit,
+    onSaveInfoChanged: (Boolean) -> Unit,
     navigateToSettings: () -> Unit,
     navigateToList: () -> Unit,
 ) {
-    var salvarInfo by remember { mutableStateOf(false) }
-
     Scaffold(
         topBar = {
             TopBarComponent(
@@ -103,7 +120,11 @@ fun LoginScreenContent(
         ) {
             LoginHeader()
 
-            LoginInputs()
+            LoginInputs(
+                state = state,
+                onLoginChanged = onLoginChanged,
+                onPasswordChanged = onPasswordChanged
+            )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -111,14 +132,17 @@ fun LoginScreenContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Checkbox(
-                    checked = salvarInfo,
-                    onCheckedChange = { salvarInfo = !salvarInfo }
+                    checked = state.saveInfo,
+                    onCheckedChange = { onSaveInfoChanged(it) }
                 )
 
                 Text(text = "Salvar as informações de login")
             }
 
-            Button(onClick = {}) {
+            Button(
+                onClick = navigateToList,
+                enabled = state.loginValid()
+            ) {
                 Text(text = "Enviar")
             }
         }
@@ -126,11 +150,15 @@ fun LoginScreenContent(
 }
 
 @Composable
-fun LoginInputs() {
-    var login by remember { mutableStateOf("") }
-    var senha by remember { mutableStateOf("") }
+fun LoginInputs(
+    state: LoginState,
+    onLoginChanged: (String) -> Unit,
+    onPasswordChanged: (String) -> Unit,
+) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(end = 24.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(end = 24.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
@@ -143,8 +171,8 @@ fun LoginInputs() {
             Text(modifier = Modifier.weight(0.4f), text = "Login:", textAlign = TextAlign.Center)
             OutlinedTextField(
                 modifier = Modifier.weight(1f),
-                value = login,
-                onValueChange = { login = it },
+                value = state.login,
+                onValueChange = { onLoginChanged(it) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(autoCorrectEnabled = false)
             )
@@ -154,8 +182,8 @@ fun LoginInputs() {
             Text(modifier = Modifier.weight(0.4f), text = "Senha:", textAlign = TextAlign.Center)
             OutlinedTextField(
                 modifier = Modifier.weight(1f),
-                value = senha,
-                onValueChange = { senha = it },
+                value = state.password,
+                onValueChange = { onPasswordChanged(it) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(autoCorrectEnabled = false),
                 visualTransformation = PasswordVisualTransformation()
@@ -166,9 +194,15 @@ fun LoginInputs() {
 
 @Composable
 fun LoginHeader() {
-    Box(modifier = Modifier.fillMaxWidth().background(Color.Green)) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.Green)
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
@@ -232,18 +266,18 @@ fun TopBarComponent(
                 DropdownMenuItem(
                     text = { Text("Configurações") },
                     onClick = {
-                        navigateToSettings();
-                        expanded = false;
+                        navigateToSettings()
+                        expanded = false
                     },
                     modifier = Modifier.padding(8.dp)
                 )
                 DropdownMenuItem(
                     text = {
-                        Text("Sobre");
+                        Text("Sobre")
                     },
                     onClick = {
-                        shouldShowDialog.value = true;
-                        expanded = false;
+                        shouldShowDialog.value = true
+                        expanded = false
                     },
                     modifier = Modifier.padding(8.dp)
                 )
@@ -257,8 +291,12 @@ fun TopBarComponent(
 fun PreviewLogin() {
     MaterialTheme {
         LoginScreenContent(
-            navigateToSettings = {  },
-            navigateToList = {  }
+            navigateToSettings = { },
+            navigateToList = { },
+            state = LoginState.initialState,
+            onLoginChanged = {  },
+            onPasswordChanged = {  },
+            onSaveInfoChanged = {  },
         )
     }
 }
