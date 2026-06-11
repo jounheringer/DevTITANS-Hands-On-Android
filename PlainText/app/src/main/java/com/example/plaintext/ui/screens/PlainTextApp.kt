@@ -1,5 +1,6 @@
 package com.example.plaintext.ui.screens
 
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -19,12 +20,12 @@ fun PlainTextApp(
     NavHost(
         navController = appState.navController,
         startDestination = Screen.Login,
-    )
-    {
+    ) {
         composable<Screen.Hello> {
-            var args = it.toRoute<Screen.Hello>()
+            val args = it.toRoute<Screen.Hello>()
             Hello_screen(args)
         }
+
         composable<Screen.Login> {
             Login_screen(
                 navigateToSettings = {
@@ -32,7 +33,9 @@ fun PlainTextApp(
                         launchSingleTop = true
                     }
                 },
-                navigateToList = {}
+                navigateToList = {
+                    appState.navigateToList()
+                }
             )
         }
 
@@ -40,6 +43,10 @@ fun PlainTextApp(
             SettingsScreen(
                 navController = appState.navController
             )
+        }
+
+        composable<Screen.List> {
+            Text(text = "Hello! This is the upcoming Password List Screen.")
         }
 
         composable<Screen.EditList>(

@@ -74,7 +74,13 @@ class JetcasterAppState(
         navController.navigate(Screen.Preferences)
     }
 
+    fun navigateToList() {
+        navController.navigate(Screen.List) {
+            popUpTo(Screen.Login) { inclusive = true }
+        }
+    }
 }
+
 
 /**
  * If the lifecycle is not resumed it means this NavBackStackEntry already processed a nav event.
