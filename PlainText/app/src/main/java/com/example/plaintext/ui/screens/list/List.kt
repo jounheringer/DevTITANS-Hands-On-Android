@@ -1,8 +1,16 @@
 package com.example.plaintext.ui.screens.list
 
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import android.content.res.Configuration
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.layout.Arrangement
@@ -40,13 +48,34 @@ import com.example.plaintext.ui.viewmodel.ListViewState
 import androidx.compose.foundation.overscroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.modifier.modifierLocalOf
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.plaintext.data.model.PasswordInfo
+import com.example.plaintext.ui.theme.PlainTextTheme
+import com.example.plaintext.ui.theme.Pink80
 
 @Composable
 fun ListView(
 ) {}
+
+
+@Composable
+fun ListHeader(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text,
+        fontSize=16.sp,
+        modifier=modifier
+            .fillMaxWidth(),
+        color= Color.Black
+    )
+}
 
 @Composable
 fun AddButton(onClick: () -> Unit) {
@@ -74,7 +103,7 @@ fun ListItemContent(
             else -> {
                 LazyColumn(
                     modifier = modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
                 ) {
                     items(listState.passwordList.size) {
                         ListItem(
@@ -97,7 +126,6 @@ fun LoadingScreen() {
         Text("Carregando")
     }
 }
-
 @Composable
 fun ListItem(
     password: PasswordInfo,
@@ -106,11 +134,13 @@ fun ListItem(
     val title = password.name
     val subTitle = password.login
 
+    var showPassword by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(70.dp)
-            .clickable { navigateToEdit(password) }
+            .clickable { showPassword = !showPassword }
             .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -126,11 +156,141 @@ fun ListItem(
         ) {
             Text(title, fontSize = 20.sp)
             Text(subTitle, fontSize = 14.sp)
+
+            AnimatedVisibility(visible = showPassword) {
+                Text(
+                    text = password.password,
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
         }
+
         Icon(
-            Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Menu",
-            tint = Color.White
+            imageVector = if (showPassword)
+                Icons.Filled.KeyboardArrowDown
+            else
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = "Menu",
+            tint = Color.Black,
+            modifier = Modifier.clickable { showPassword = !showPassword }
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+@Preview(name="Modelo completo")
+fun ListScreen(
+
+    listState: ListViewState = ListViewState(
+        isCollected = true,
+        passwordList = listOf(
+            PasswordInfo(
+                id = 1,
+                name = "Twitter",
+                login = "dev",
+                password = "senha123",
+                notes = "Conta Teste Twitter"
+            ),
+            PasswordInfo(
+                id = 2,
+                name = "Facebook",
+                login = "devtitans",
+                password = "senha456",
+                notes = "Conta Teste Facebook"
+            ),
+            PasswordInfo(
+                id = 3,
+                name = "Moodle",
+                login = "dev.com",
+                password = "senha789",
+                notes = "Conta Teste universitária"
+            )
+        )
+    ),
+    navigateToEdit: (PasswordInfo) -> Unit = {},
+    onAddClick: () -> Unit = {}
+) {
+    PlainTextTheme() {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        ListHeader(text = "PlainText")
+                    },
+                )
+            },
+            floatingActionButton = {
+                AddButton(onClick = onAddClick)
+            },
+        ) { padding ->
+            ListItemContent(
+                modifier = Modifier.padding(padding),
+                listState = listState,
+                navigateToEdit = navigateToEdit
+            )
+        }
+    }
+}
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_NO,name="senha não visivel visivel")
+@Composable
+fun ListItemScreenNot() {
+    ListItem(
+        PasswordInfo(
+            1,
+            "Plataforma",
+            "login",
+            "senha",
+            "teste"
+        )
+    ){ }
+}
+
+
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_NO,name="senha visivel")
+@Composable
+fun ListItemScreen() {
+    var showPassword by remember { mutableStateOf(true) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(70.dp)
+            .clickable { showPassword = !showPassword }
+            .padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+            contentDescription = "Logo",
+            modifier = Modifier.fillMaxHeight()
+        )
+        Column(
+            modifier = Modifier
+                .weight(.7f)
+                .padding(horizontal = 5.dp),
+        ) {
+            Text("Plataforma", fontSize = 20.sp)
+            Text("login", fontSize = 14.sp)
+
+            AnimatedVisibility(visible = showPassword) {
+                Text(
+                    text = "senha",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
+        }
+
+        Icon(
+            imageVector = if (showPassword)
+                Icons.Filled.KeyboardArrowDown
+            else
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = "Menu",
+            tint = Color.Black,
+            modifier = Modifier.clickable { showPassword = !showPassword }
+        )
+    }
+}
