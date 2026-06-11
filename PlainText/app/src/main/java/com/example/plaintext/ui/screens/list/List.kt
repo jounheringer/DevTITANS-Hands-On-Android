@@ -180,7 +180,7 @@ fun ListItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@Preview
+@Preview(name="Modelo completo")
 fun ListScreen(
 
     listState: ListViewState = ListViewState(
@@ -231,5 +231,66 @@ fun ListScreen(
                 navigateToEdit = navigateToEdit
             )
         }
+    }
+}
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_NO,name="senha não visivel visivel")
+@Composable
+fun ListItemScreenNot() {
+    ListItem(
+        PasswordInfo(
+            1,
+            "Plataforma",
+            "login",
+            "senha",
+            "teste"
+        )
+    ){ }
+}
+
+
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_NO,name="senha visivel")
+@Composable
+fun ListItemScreen() {
+    var showPassword by remember { mutableStateOf(true) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(70.dp)
+            .clickable { showPassword = !showPassword }
+            .padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+            contentDescription = "Logo",
+            modifier = Modifier.fillMaxHeight()
+        )
+        Column(
+            modifier = Modifier
+                .weight(.7f)
+                .padding(horizontal = 5.dp),
+        ) {
+            Text("Plataforma", fontSize = 20.sp)
+            Text("login", fontSize = 14.sp)
+
+            AnimatedVisibility(visible = showPassword) {
+                Text(
+                    text = "senha",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
+        }
+
+        Icon(
+            imageVector = if (showPassword)
+                Icons.Filled.KeyboardArrowDown
+            else
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = "Menu",
+            tint = Color.Black,
+            modifier = Modifier.clickable { showPassword = !showPassword }
+        )
     }
 }
