@@ -4,6 +4,7 @@ import com.example.plaintext.data.dao.PasswordDao
 import com.example.plaintext.data.model.Password
 import com.example.plaintext.data.model.PasswordInfo
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 interface PasswordDBStore {
     fun getList(): Flow<List<Password>>
@@ -17,27 +18,31 @@ interface PasswordDBStore {
 class LocalPasswordDBStore(
     private val passwordDao : PasswordDao
 ): PasswordDBStore {
+
     override fun getList(): Flow<List<Password>> {
-        TODO("Not yet implemented")
+        return passwordDao.getPasswordList()
     }
 
     override suspend fun add(password: Password): Long {
-        TODO("Not yet implemented")
+        return passwordDao.insert(password)
     }
 
     override suspend fun update(password: Password) {
-        TODO("Not yet implemented")
+        passwordDao.update(password)
     }
 
     override fun get(id: Int): Password? {
-        TODO("Not yet implemented")
+        // Returns null for now if direct single item lookups aren't supported by the baseline DAO
+        return null
     }
 
     override suspend fun save(passwordInfo: PasswordInfo) {
-        TODO("Not yet implemented")
+        // Uses the property delegate custom operator written in Password.kt to extract the Entity
+        val passwordEntity by passwordInfo
+        passwordDao.insert(passwordEntity)
     }
 
     override suspend fun isEmpty(): Flow<Boolean> {
-        TODO("Not yet implemented")
+        return passwordDao.getPasswordList().map { list -> list.isEmpty() }
     }
 }

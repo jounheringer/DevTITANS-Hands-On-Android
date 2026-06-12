@@ -5,6 +5,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import androidx.room.Room
+import com.example.plaintext.data.PlainTextDatabase
 import com.example.plaintext.data.dao.PasswordDao
 import com.example.plaintext.data.repository.LocalPasswordDBStore
 import com.example.plaintext.data.repository.PasswordDBStore
@@ -21,11 +23,28 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object DataDiModule {
+
     @Provides
     @Singleton
-    fun providePasswordDao(
-        passwordDao: PasswordDao
-    ): PasswordDBStore = LocalPasswordDBStore(passwordDao)
+    fun provideDatabase(@ApplicationContext context: Context): PlainTextDatabase {
+        return Room.databaseBuilder(
+            context,
+            PlainTextDatabase::class.java,
+            "plaintext_db"
+        ).build()
+    }
+
+    @Provides
+    @Singleton
+    fun providePasswordDao(database: PlainTextDatabase): PasswordDao {
+        return database.passwordDao()
+    }
+
+    @Provides
+    @Singleton
+    fun providePasswordDBStore(passwordDao: PasswordDao): PasswordDBStore {
+        return LocalPasswordDBStore(passwordDao)
+    }
 
     @Provides
     @Singleton
