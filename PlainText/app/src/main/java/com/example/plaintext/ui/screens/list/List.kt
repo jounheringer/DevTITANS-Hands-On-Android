@@ -59,8 +59,33 @@ import com.example.plaintext.ui.theme.PlainTextTheme
 import com.example.plaintext.ui.theme.Pink80
 
 @Composable
-fun ListView(
-) {}
+@OptIn(ExperimentalMaterial3Api::class)
+fun ListView(navigateToEdit: (PasswordInfo) -> Unit = {},
+             onAddClick: () -> Unit = {},
+             viewModel: ListViewModel = hiltViewModel()
+
+) {
+    val listState = viewModel.listViewState
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    ListHeader(text = "PlainText")
+                },
+            )
+        },
+        floatingActionButton = {
+            AddButton(onClick = onAddClick)
+        },
+    ) { padding ->
+        ListItemContent(
+            modifier = Modifier.padding(padding),
+            listState = listState,
+            navigateToEdit = navigateToEdit
+        )
+    }
+}
 
 
 @Composable

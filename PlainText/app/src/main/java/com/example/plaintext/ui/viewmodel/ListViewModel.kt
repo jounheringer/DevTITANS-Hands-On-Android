@@ -30,7 +30,13 @@ open class ListViewModel @Inject constructor (
             // Execute o metodo getList() do passwordDBStore e colete o resultado
             passwordDBStore.getList().collect { list ->
                 listViewState = ListViewState(
-                    passwordList = list,
+                    passwordList = list.map { PasswordInfo(
+                        id = it.id,
+                        name = it.name,
+                        login = it.login,
+                        password = it.password,
+                        notes = it.notes,
+                    ) },
                     isCollected = true
                 )
             }
